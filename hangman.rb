@@ -19,7 +19,7 @@ class Hangman
       
       break unless @chooser.guessed_word.include?('_')
     end
-    
+    puts @guesser.guessed_word.upcase
     puts "Congrats! It took #{num_guesses} guesses!"    
   end
 end
@@ -50,10 +50,9 @@ class HumanPlayer
   end
   
   def respond letter
-    puts "Was the letter in the word? If so, put what places (e.g. '2 4'), if not just hit enter:"
+    puts "Was the letter #{letter} in the word? If so, put what places (e.g. '2 4'), if not just hit enter:"
     places = gets.chomp()
-    fill_in_guessed(places, letter)
-    
+    fill_in_guessed(places, letter) 
   end
   
   def fill_in_guessed guessed_places, letter
@@ -91,58 +90,50 @@ class ComputerPlayer
     @used_letters = []
   end
 
-
   def guess
-    letter = select_letter
-    puts "I'm guess #{letter}"
+    get_possible_words if @possible_words.nil?
+
+    update_possibilities
+    
+    letter = get_most_freq_letter
     @used_letters << letter
-    
-    
-    puts @possible_words
     
     letter
   end
-  
-  def select_letter
-    init_possible_words if @possible_words.nil?
-    get_most_freq_letter
-  end
 
-  def init_possible_words
-    @possible_words = @dictionary.select do |word|
-      @guessed_word.length == word.length
-    end    
+  def update_possibilities
+    unless @used_letters.empty?
+      last_was_in = @guessed_word.include?(@used_letters[-1])
+      @possible_words = @possible_words.select do |word|
+        word.include?(@used_letters[-1]) == last_was_in and possible_match?(word)
+      end
+    end  
   end
 
   def get_most_freq_letter
-    reduce_possible_words
+    frequencies = Hash.new(0)
+
+    (@possible_words.join('').split('') - @used_letters).each do |char|
+      frequencies[char] += 1
+    end
     
-    highest_letter_count = [0, nil]
-    letters_left = @possible_words.join('').each_char.select { |letter| !@used_letters.include?(letter) }
-    letters_left.each do |letter|
-      if letters_left.count(letter) > highest_letter_count[0]
-        highest_letter_count = [letters_left.count(letter), letter]
-      end
-    end
-    p highest_letter_count[1], ":     ", highest_letter_count[0]
-    highest_letter_count[1]
+    frequencies.sort_by { |letter, frequency| -frequency }.first.first
   end
 
-  def reduce_possible_words
-    @possible_words = @possible_words.select do |word|
-      possible_match?(word)
+
+  def get_possible_words
+    @possible_words = @dictionary.select do |word|
+      word.length == @guessed_word.length
     end
   end
 
-  def possible_match? possible_word
-    @guessed_word.each_char.with_index do |char, ind|
-      return false if (char != '_' and char != possible_word[ind])
-      if @used_letters.include?(possible_word[ind]) and char != possible_word[ind]
+  def possible_match? word
+    (@guessed_word.length - 1).times do |ind|
+      if @guessed_word[ind] != "_" and @guessed_word[ind] != word[ind]
         return false
-      end
+      end      
+      true
     end
-    
-    true
   end
 
 
@@ -153,7 +144,7 @@ class ComputerPlayer
 
   def respond letter
     if @selected_word.include?(letter)
-      puts "#{letter} is was in the word"
+#      puts "#{letter} is in the word"
       fill_in_guessed letter
     else
       "Sorry, #{letter} was not in the word"
@@ -174,8 +165,6 @@ class ComputerPlayer
   def load_dictionary
     File.readlines('dictionary.txt').map(&:chomp)
   end
-  
-
 end
 
 
@@ -187,7 +176,7 @@ hum = HumanPlayer.new
 # puts comp.select_letter
 # puts comp.get_most_freq_letter
 
-game = Hangman.new(hum, comp)
+game = Hangman.new(comp, comp)
 
 game.play
 
