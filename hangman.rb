@@ -10,31 +10,28 @@ class Hangman
     
     while true
       num_guesses += 1
-      puts @chooser.selected_word
       puts @chooser.guessed_word
       
       @chooser.respond( @guesser.guess )
       
-      break if @chooser.guessed_word == @chooser.selected_word
+      break unless @chooser.guessed_word.include?('_')
     end
     
-    puts "Congrats! It took #{num_guesses} guesses!"
-    
+    puts "Congrats! It took #{num_guesses} guesses!"    
   end
 end
 
 
 class HumanPlayer
+  attr_reader :guessed_word
+  
   def initialize
     @selected_word = nil
     @guessed_word = nil    
     @used_letters = []
   end
-
-  # def guess
-  #   letter = prompt_guess
-  # end
   
+
   def guess
     puts "You've used #{@used_letters}:"
     puts "Please enter a new guess:"
@@ -49,13 +46,33 @@ class HumanPlayer
     letter
   end
   
-  def respond
+  def respond letter
+    puts "Was the letter in the word? If so, put what places (e.g. '2 4'), if not just hit enter:"
+    places = gets.chomp()
+    fill_in_guessed(places, letter)
+    
+  end
+  
+  def fill_in_guessed guessed_places, letter
+    guessed_places.split(" ").map(&:to_i).each do |place|
+      @guessed_word[place - 1] = letter
+   end
+ end
+
+
+
+  def get_word
+    puts "How many letters are in your word"
+    num_let = gets.chomp.to_i
+    @guessed_word = "_" * num_let
   end
 
   def is_valid_letter? letter
     return false if !('a'..'z').include?(letter) or @used_letters.include?(letter)
     true
   end
+
+
 
 end
 
@@ -104,7 +121,7 @@ end
 comp = ComputerPlayer.new
 hum = HumanPlayer.new
 
-game = Hangman.new(comp, hum)
+game = Hangman.new(hum, hum)
 
 game.play
 
