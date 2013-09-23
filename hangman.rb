@@ -144,7 +144,6 @@ class ComputerPlayer
 
   def respond letter
     if @selected_word.include?(letter)
-#      puts "#{letter} is in the word"
       fill_in_guessed letter
     else
       "Sorry, #{letter} was not in the word"
@@ -171,12 +170,8 @@ end
 comp = ComputerPlayer.new
 hum = HumanPlayer.new
 
-# comp.guessed_word = "_" * 22
-# 
-# puts comp.select_letter
-# puts comp.get_most_freq_letter
-
-game = Hangman.new(comp, comp)
+#can run human vs comp, comp v comp, or human vs human
+game = Hangman.new(hum, comp)
 
 game.play
 
